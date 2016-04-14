@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>VidyaVortex - Dive into the World of Video Games</title>
+    
+    <meta name="description" content="Browse page for VidyaVortex Web Service, Project WSD 2015">
+    <meta charset="utf-8" />
+
+    {% load staticfiles %}
+    <link rel="shortcut icon" type="image/png" href="{%  static "DataVortex/img/favicon.png" %}">
+    <script src="{% static "DataVortex/js/jquery-1.11.1.min.js" %}"></script> 
+    <script src="{% static "DataVortex/js/vidyavortex.js" %}"></script> 
+
+    <!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+	<!-- Optional theme 
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous"> -->
+
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+	
+	<link rel="stylesheet" href="{% static "DataVortex/css/main.css" %}" />
+	<script>
+		$(document).ready(function() {
+			"use strict";
+			
+			var active_tab = 1;
+			var ordering = 'NAME';
+			var deldict = [];
+
+
+			/***************************************/
+			/************* FUNCTIONS ***************/
+			/***************************************/
+
+			function UpdateList(order, query) {
+				
+				var msg = {'messageType': 'GLOBAL_GAME_LIST', 'ordering': order};
+
+				jsonRequest(msg, 0, function(response) {
+					if (query) SearchList(response, query);
+					else PrintList(response);		
+				});
+			}
+
+			function PrintList(list){
+
+				var list_id = "#gamelist";
+				var redirect = "/purchase/";
+
+				$("#gamelist").html("");
+				{% if user.is_authenticated %}
+				$("#yourgamelist").html(""); 
+				{% endif %}
+
+				for (var i = 0; i < list.length; i++) {
+
+					{% if user.is_authenticated %}
+
+		      		if (list[i].isyourgame) {
+		      			list_id = "#yourgamelist";
+		      			redirect = "/playgame/";   
+		      		}
+		      		else {
+		      			list_id = "#gamelist";
+		      			redirect = "/purchase/";
+		      		}
+
+		      		if (list[i].candelete) {
+		      			$('#yourgamelist').append('\
+		      				<a id="listlink" href="' + redirect + list[i].id + '/">\
+		      				<div id="gamelist_row">\
+		      				<img style="width: 80px;height: 80px;display: inline" src=' + list[i].thumbnail + ' alt="thumbnail"/>\
+		      				<span id="gamelist_text"> ' + list[i].name + '</span>\
+		      				</div>\
+		      				</a>\
+		      				<div class="container-fluid" id="details">\
+		      				<div class="devdetail col-md-4">Released: '+ list[i].time +' </div>\
+		      				<div class="devdetail col-md-2">Rating: '+ list[i].rating +' </div>\
+		      				<div class="devdetail col-md-6">\
+		      				<a href="/salesinfo/'+ list[i].id +'/"><button class="delbutton" type="button">Sales Info</button></a>\
+		      				<a href="/editgame/'+ list[i].id +'/"><button class="delbutton" type="button">Edit Game</button></a>\
+		      				<a href="/delete/'+ list[i].id +'/"><button class="delbutton" type="button">Delete Game</button></a>\
+		      				</div>\
+		      				</div>');
+		      				
+		      		}
+		      	
+		      		else {
+		      	    {% endif %}
+
+		        		$(list_id).append('\
+		      				<a id="listlink" href="' + redirect + list[i].id + '/">\
+		      				<div id="gamelist_row">\
+		      				<img style="width: 80px;height: 80px;display: inline" src=' + list[i].thumbnail + ' alt="thumbnail"/>\
+		      				<span id="gamelist_text"> ' + list[i].name + '</span>\
+		      				</div>\
+		      				</a>\
+		      				<div class="row" id="details">\
+		      				<div class="detail col-md-5">Released: '+ list[i].time +' </div>\
+		      				<div class="detail col-md-2">Rating: '+ list[i].rating +' </div>\
+		      				</div>');
+		     
+		        	
+
+		        	{% if user.is_authenticated %}
+
+		        	}
+
+		        	{% endif %}		
+			   	}
+			}
+
+			
+
+			function SearchList(response, query){
+				var matches = [];
+				var test = query.toLowerCase();
+			
+				for (var i = 0; i < response.length; i++) {
+						if(response[i].name.toLowerCase().indexOf(test) != -1){
+							matches.push(response[i]);
+						}
+				}
+				PrintList(matches);
+			}
+
+			/**********************************************/
+			/************* ON LOADUP ACTIONS **************/
+			/**********************************************/
+
+			{% if isDev %}
+			$('#second_tab').click();
+			{% endif %}
+
+			UpdateList(ordering, null);
+
+			/*********************************************/
+			/************* EVENT LISTENERS ***************/
+			/*********************************************/
+
+			$('#first_tab').click(function(){
+				active_tab = 1;
+				UpdateList(ordering, null);
+				//alert(active_tab);
+			});
+			$('#second_tab').click(function(){
+				active_tab = 2;
+				UpdateList(ordering, null);
+			});
+
+			// update list with search match set
+			$('#searchStart').click(function(){
+				var query = $('#searchQuery').val();
+				UpdateList(ordering, query);
+			});
+			$('#name_ordering').click(function(){
+				ordering = 'NAME';
+				UpdateList(ordering, null);
+			});
+			$('#rating_ordering').click(function(){
+				ordering = 'RATING';
+				UpdateList(ordering, null);
+			});
+			$('#date_ordering').click(function(){
+				ordering = 'RELEASE_DATE';
+				UpdateList(ordering, null);
+			});
+			// display all games once user starts backspacing search query
+			$("#searchQuery").keyup(function() {
+				UpdateList(ordering, null);
+			}); 
+
+		});
+	</script>
+
+  	</head>
+  	<body>	
+  		<div id="container">
+		  	<div id="header">
+				<div id="logo">
+					<a href="{% url "homepage" %}"><img src="{% static "DataVortex/img/logo.png" %}" alt="VidyaVortexLogo"/></a>
+				</div>
+				<div id="loginbar">
+					{% if not user.is_authenticated %}
+						<p><a href="{% url "login" %}">Login</a> <b>|</b> <a href="{% url "register" %}">Register</a></p>
+					{% else %}
+						<p><a href="{% url "logout" %}">Logout</a> <b>|</b> Welcome, {{ user.get_username }}!</p>
+					{% endif %}
+				</div>
+			</div>
+			<div id="content">
+				<div id="sidebar">
+					<ul>
+						<li><a href="{% url "homepage" %}">HOME</a></li>
+						{% if isDev %}
+						<li><a href="{% url "addgame" %}">ADD NEW GAME</a></li>
+						{% endif %}
+						<li><a href="{% url "browse" %}">BROWSE GAMES</a></li>
+						<li><a href="{% url "highscores" %}">HIGHSCORES</a></li>
+						<li><a href="{% url "faqpage" %}">FAQ</a></li>
+					</ul>
+				</div>
+				<div id="browse-box">
+					<nav class="navbar navbar-default">		
+						<ul class="nav nav-tabs">
+							<li class="active"><a data-toggle="tab" href="#available_games" id="first_tab">Available Games</a></li>
+							{% if user.is_authenticated %}
+						  	<li><a data-toggle="tab" href="#your_games" id="second_tab">Your Games</a></li>
+						  	{% endif %}
+						  	<li class="dropdown">
+						      <a class="dropdown-toggle" data-toggle="dropdown" href="#">Sort by
+						        <span class="caret"></span></a>
+						        <ul class="dropdown-menu">
+								    <li><a href="#" id="name_ordering">Name</a></li>
+								    <li><a href="#" id="rating_ordering">Rating</a></li>
+								    <li><a href="#" id="date_ordering">Release Date</a></li> 
+						       	</ul>
+						    </li>
+						    <li class="col-sm-3 col-md-4 pull-right">
+					            <form class="navbar-form">
+					                <div class="input-group">
+					                    <input type="search" class="form-control" placeholder="Search Games" name="q" id="searchQuery">
+					                    <div class="input-group-btn"> 
+					                        <button class="btn btn-default" id="searchStart" type="button"><i class="glyphicon glyphicon-search"></i></button>
+					                    </div> 
+					                </div>
+					            </form>
+					        </li> 	
+						</ul>
+						<div class="tab-content">
+							<div id="available_games" class="tab-pane fade in active">
+								<div id="gamelist"></div>
+							</div>
+							{% if user.is_authenticated %}
+							<div id="your_games" class="tab-pane fade">
+								<div id="yourgamelist"></div>
+							</div>
+							{% endif %}
+						</div>
+					</nav>
+				</div>
+			</div>
+			<div id="footer">
+				<div id="footer-text">
+					<p>Copyright © VidyaVortex. All rights reserved. Design by WSD-Group.</p>
+				</div>
+			</div>
+	 	</div>
+  	</body>
+</html>

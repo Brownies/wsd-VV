@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>VidyaVortex - Dive into the World of Video Games</title>
+    
+    <meta name="description" content="Play game page for VidyaVortex Web Service, Project WSD 2015">
+    <meta charset="utf-8" />
+
+    {% load staticfiles %}
+    <link rel="shortcut icon" type="image/png" href="{%  static "DataVortex/img/favicon.png" %}">
+    <script src="{% static "DataVortex/js/jquery-1.11.1.min.js" %}"></script> 
+    <script src="{% static "DataVortex/js/vidyavortex.js" %}"></script> 
+
+    <!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+	<!-- Optional theme 
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous"> -->
+
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+	<link rel="stylesheet" href="{% static "DataVortex/css/main.css" %}" />
+
+    <script>
+    	$(document).ready(function() {
+
+    		var gameOrigin = getOrigin("{{ game_url }}");
+    		var gameID = {{ game_id }};
+
+    		/***************************************/
+			/************* FUNCTIONS ***************/
+			/***************************************/
+
+			function updateHighscores(highscores) {
+		      $("#item_list").html("");
+		      for (var i = 0; i < highscores.length; i++) {
+		        $("#item_list").append("<li>" + highscores[i] + "</li>");
+		      }
+		    }
+
+		    function DisableButtons(){
+				$('#thumb-up').prop("disabled", true);
+				$('#thumb-up').css("opacity", 0.5);
+				$('#thumb-down').prop("disabled", true);
+				$('#thumb-down').css("opacity", 0.5);
+			}
+
+			function Rate(val){
+				var msg = {'messageType': 'RATE', 'rate': val};
+				jsonRequest(msg, gameID, function(res){
+					
+					if(res.messageType === "GAME_RATED"){
+						DisableButtons();
+						$('#ratetext').text("Thank you!");
+					}
+					else if(res.messageType === "ALREADY_RATED"){
+						
+						DisableButtons();
+						$('#ratetext').text("You have already rated this game.");
+					}
+				});
+			}
+
+
+		    /**********************************************/
+			/************* ON LOADUP ACTIONS **************/
+			/**********************************************/
+
+		    // request player's highscores on DOM load up
+		    var hs_req = {
+				"messageType": "SCORE",
+				"score": -1
+			};
+
+			jsonRequest(hs_req, gameID, function(response) {
+				updateHighscores(response.highScores);
+			});
+
+    		
+			// iframe message handler
+			$(window).on("message", function(evt) {	
+
+				// Get data from sent message
+			    var data = evt.originalEvent.data;
+		
+				// Accept messages only from iframe origin
+				if(evt.originalEvent.origin === gameOrigin) {
+		        	
+			      	if (data.messageType === "SETTING") {
+
+				      	var newWidth = data.options.width;
+				      	var newHeight = data.options.height;
+
+				      	// do not allow too big window
+				      	if(newWidth > 1000) newWidth = 1000;
+				      	if(newHeight > 1000) newHeight = 1000;
+				      	
+				      	$("#game").css("height", newHeight + "px");
+				      	$("#game").css("width", newWidth + "px");
+
+			      	}
+
+			      	else if (data.messageType === "LOAD_REQUEST") {
+			      	// send saved game data to the iframe
+
+			      		jsonRequest(data, gameID, function(response) {
+			      			if(response.messageType === "GAME_LOADED"){
+								
+								var msg = {
+									"messageType": "LOAD",
+									"gameState": response.gameState
+								}
+								
+								sendMessage(msg, gameOrigin);
+							}							
+							else sendMessage(response, gameOrigin);							
+						});
+			      	}
+
+			      	else if (data.messageType === "SAVE") {
+			      	// send saved game data to the server
+
+						jsonRequest(data, gameID, function(response) {
+							if(response.messageType === "GAME_SAVED"){
+								console.log("Server response: " + response.messageType + "\nRocks in bagback: " + response.gameState.length);
+							}
+							else sendMessage(response, gameOrigin);
+						});
+			      	}
+
+			      	else if (data.messageType === "SCORE"){
+			      	// Send score data to server via AJAX
+			      		
+						jsonRequest(data, gameID, function(response) {
+							if(response.messageType === "SCORE_SAVED"){
+								console.log("Server response: " + response.messageType + "\nScore submitted: " + response.score);
+								updateHighscores(response.highScores);
+							}
+							else sendMessage(response, gameOrigin);
+						});
+			      	}
+			    }
+		  	}); 
+			
+			/*********************************************/
+			/************* EVENT LISTENERS ***************/
+			/*********************************************/
+
+			$('#thumb-up').click(function(){
+				Rate(1);
+			});
+			$('#thumb-down').click(function(){
+				Rate(-1);
+			});
+		});
+	</script>
+  </head>
+  <body>	
+  	<div id="bg">
+  		<div id="container">
+		  	<div id="header">
+				<div id="logo">
+					<a href="{% url "homepage" %}"><img src="{% static "DataVortex/img/logo.png" %}" alt="VidyaVortexLogo"/></a>
+				</div>
+				<div id="loginbar">
+					{% if not user.is_authenticated %}
+						<p><a href="{% url "login" %}">Login</a> <b>|</b> <a href="{% url "register" %}">Register</a></p>
+					{% else %}
+						<p><a href="{% url "logout" %}">Logout</a> <b>|</b> Welcome, {{ user.get_username }}!</p>
+					{% endif %}
+				</div>
+			</div>
+			<div id="content">
+				<div id="sidebar">
+					<ul>
+						<li><a href="{% url "homepage" %}">HOME</a></li>
+						{% if isDev %}
+						<li><a href="{% url "addgame" %}">ADD NEW GAME</a></li>
+						{% endif %}
+						<li><a href="{% url "browse" %}">BROWSE GAMES</a></li>
+						<li><a href="{% url "highscores" %}">HIGHSCORES</a></li>
+						<li><a href="{% url "faqpage" %}">FAQ</a></li>
+					</ul>
+				</div>
+				<div id="content-box">
+					<h2>{{ game_name }}</h2>
+					<iframe id="game" src="{{ game_url }}"></iframe>
+					{% if not isDev %}
+					<div id="rate">
+						<p id="ratetext">Rate this game:</p>
+						<button id="thumb-down" type="button">&#128078;</button>
+						<button id="thumb-up" type="button">&#128077;</button>
+					</div>
+					{% endif %}
+					<div id="highscore">
+						<p id="highscore_text">Your Highscores:</p>
+						<ol id="item_list"></ol>
+					</div>
+				</div>
+			</div>
+			<div id="footer">
+				<div id="footer-text">
+					<p>Copyright © VidyaVortex. All rights reserved. Design by WSD-Group.</p>
+				</div>
+			</div>
+		</div>
+	 </div>
+  </body>
+</html>

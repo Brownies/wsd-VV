@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>VidyaVortex - Dive into the World of Video Games</title>
+    
+    <meta name="description" content="Add a new game page for VidyaVortex Web Service, Project WSD 2015">
+    <meta charset="utf-8" />
+
+    {% load staticfiles %}
+    <link rel="shortcut icon" type="image/png" href="{%  static "DataVortex/img/favicon.png" %}">
+    <script src="{% static "DataVortex/js/jquery-1.11.1.min.js" %}"></script> 
+
+    <!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+	<!-- Optional theme 
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous"> -->
+
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+	
+	<link rel="stylesheet" href="{% static "DataVortex/css/main.css" %}" />
+  </head>
+  <body>	
+  	<div id="bg">
+  		<div id="container">
+		  	<div id="header">
+				<div id="logo">
+					<a href="{% url "homepage" %}"><img src="{% static "DataVortex/img/logo.png" %}" alt="VidyaVortexLogo"/></a>
+				</div>
+				<div id="loginbar">
+					{% if not user.is_authenticated %}
+						<p><a href="{% url "login" %}">Login</a> <b>|</b> <a href="{% url "register" %}">Register</a></p>
+					{% else %}
+						<p><a href="{% url "logout" %}">Logout</a> <b>|</b> Welcome, {{ user.get_username }}!</p>
+					{% endif %}
+				</div>
+			</div>
+			<div id="content">
+				<div id="sidebar">
+					<ul>
+						<li><a href="{% url "homepage" %}">HOME</a></li>
+						{% if isDev %}
+						<li><a href="{% url "addgame" %}">ADD NEW GAME</a></li>
+						{% endif %}
+						<li><a href="{% url "browse" %}">BROWSE GAMES</a></li>
+						<li><a href="{% url "highscores" %}">HIGHSCORES</a></li>
+						<li><a href="{% url "faqpage" %}">FAQ</a></li>
+					</ul>
+				</div>
+				<div id="content-box">
+					{% if edit %}
+					<h2>Edit game: {{ game_name }}</h2>
+					<form action="/editgame/{{game_id}}/" method="post" class="form-inline" enctype="multipart/form-data">
+					{% else %}
+					<h2>Put a new game on sale:</h2>
+					<form action="{% url "addgame" %}" method="post" class="form-inline" enctype="multipart/form-data">
+					{% endif %}
+					  {% csrf_token %} 
+					    <p><label for="id_name">Give a name for your game:</label>
+					    	{% if error == 2 %}
+					    	<ul><li>There already exists another game with this name.</li></ul>
+					    	{% endif %}
+   							{{ form.name.errors }}
+   							{{ form.name }}
+   							{% if edit %}<span>(optional)</span>{% endif %}
+  						</p>
+  						<p><label for="id_url">Enter the URL to your game:</label>
+  							{% if error == 1 %}
+  							<ul><li>Please provide a valid https URL.</li></ul>
+  							{% elif error == 3 %}
+  							<ul><li>There already exists another game with this url.</li></ul>
+  							{% endif %}
+   							{{ form.url.errors }}
+   							{{ form.url }}
+   							{% if edit %}<span>(optional)</span>{% endif %}
+  						</p>
+  						<p><label for="id_price">Choose a price for purchasing your game:</label>
+   							{{ form.price.errors }}
+   							{{ form.price }}
+   							<span>€</span>
+  						</p>
+  						<p><label id="description_label" for="id_description">Describe your game:</label>
+   							{{ form.description.errors }}
+   							{{ form.description }}
+  						</p>
+  						<p><label id="thumbnail_label" for="id_thumbnail">Give an URL to a screenshot of your game:</label>
+   							{{ form.thumbnail.errors }}
+   							{{ form.thumbnail }}
+  						</p>
+					  	<input type="submit" value="Submit" />
+					</form>
+					<div id="error">
+					{% if state == 1 %}
+						<h2>Congratulations! Game added successfully!</h2>
+					{% elif state == 2 %}
+						<h2>Congratulations! Game edited successfully!</h2>
+					{% endif %}
+					</div>
+				</div>
+			</div>
+			<div id="footer">
+				<div id="footer-text">
+					<p>Copyright © VidyaVortex. All rights reserved. Design by WSD-Group.</p>
+				</div>
+			</div>
+		</div>
+	 </div>
+  </body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>VidyaVortex - Dive into the World of Video Games</title>
+    
+    <meta name="description" content="Frequently asked questions (FAQ) page for VidyaVortex Web Service, Project WSD 2015">
+    <meta charset="utf-8" />
+
+    {% load staticfiles %}
+    <link rel="shortcut icon" type="image/png" href="{%  static "DataVortex/img/favicon.png" %}">
+    <script src="{% static "DataVortex/js/jquery-1.11.1.min.js" %}"></script> 
+
+    <!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+	<!-- Optional theme 
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous"> -->
+
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+	
+	<link rel="stylesheet" href="{% static "DataVortex/css/main.css" %}" />
+  </head>
+  <body>	
+  	<div id="bg">
+  		<div id="container">
+		  	<div id="header">
+				<div id="logo">
+					<a href="{% url "homepage" %}"><img src="{% static "DataVortex/img/logo.png" %}" alt="VidyaVortexLogo"/></a>
+				</div>
+				<div id="loginbar">
+					{% if not user.is_authenticated %}
+						<p><a href="{% url "login" %}">Login</a> <b>|</b> <a href="{% url "register" %}">Register</a></p>
+					{% else %}
+						<p><a href="{% url "logout" %}">Logout</a> <b>|</b> Welcome, {{ user.get_username }}!</p>
+					{% endif %}
+				</div>
+			</div>
+			<div id="content">
+				<div id="sidebar">
+					<ul>
+						<li><a href="{% url "homepage" %}">HOME</a></li>
+						{% if isDev %}
+						<li><a href="{% url "addgame" %}">ADD NEW GAME</a></li>
+						{% endif %}
+						<li><a href="{% url "browse" %}">BROWSE GAMES</a></li>
+						<li><a href="{% url "highscores" %}">HIGHSCORES</a></li>
+						<li><a href="{% url "faqpage" %}">FAQ</a></li>
+					</ul>
+				</div>
+				<div id="content-box">
+					<h2>Frequently Asked Questions (FAQ):</h2>
+					<ul>
+						<li><p class="faqheading">HOW DO I REGISTER AN USER ACCOUNT?</p>
+							<p>Click <a href="{% url "register" %}"><b>Register</b></a> link on site's upper right corner. Once you are on the register page fill out the form with required information. Last option is to choose your account type, which is important. Player account type is for customers who want to buy and play games on this website. Developer account type is for game developers who want to upload and sell their games on this website. Then click 'Submit' and you're done! Now you can login to your account by using the <a href="{% url "login" %}"><b>Login</b></a> link adjacent to Register link.</p>
+                        </li>
+						<li><p class="faqheading">HOW CAN I PUT MY GAME ON SALE?</p>
+							<p>You must first log in to your developer account and select <a href="{% url "addgame" %}"><b>ADD NEW GAME</b></a> link in the left sidebar.
+							Once you are on the addgame page fill out the form with required information. Note that the game name must be unique. The Url form field is the URL to your hosted javascript game (html-file). Note that url must use https protocol. Description summarizes your game's main features. Screenshot is an image of your game (gameplay scene for example) that you are requested to upload to the server. Once all fields are filled with proper information, click 'Submit' and you're done! You can now see your new game in your inventory by choosing <a href="{% url "browse" %}"><b>BROWSE GAMES</b></a> link .</p>
+						</li>
+                        <li><p class="faqheading">HOW CAN I PURCHASE A GAME?</p>
+							<p>You must be first be logged in to your player account and click <a href="{% url "browse" %}"><b>BROWSE GAMES</b></a> link in the left side bar. There you can see available games listed in prefered order (default: alphabetical order) and you can also search them by their names. Once you find the game you're looking for simply click its entry in the list and you should be redirected to the purchase page which displays information about the game. If you decide to buy this game, simply click the 'Purchase' button on the bottom of the page (you might need to scroll down to see it) and you will be redirected to the payment service.</p>
+							<p>If the payment is successful you should see a message 'Payment successful!' back in our service. If error messages are displayed and you didn't intentionally cancel the purchase yourself go back to the purchase page and click 'Purchase' again. This time make sure you enter your payment credentials correctly.</p>
+
+							<p>If the payment was successful you can now view your purchased game in <a href="{% url "browse" %}"><b>BROWSE GAMES</b></a> under the tab 'Your Games'.</p>
+						</li>
+						<li><p class="faqheading">HOW CAN I PLAY A GAME I PURCHASED?</p>
+							Simply go to <a href="{% url "browse" %}"><b>BROWSE GAMES</b></a> and select 'Your Games' tab. There is displayed a list of games that you have purchased. Simply click the list item of the desired game to start playing!</p>
+						</li>
+						<li><p class="faqheading">WHAT ABOUT HIGHSCORES? HOW CAN I SEE OR SUBMIT THEM?</p>
+							<p>While playing a game, if the game supports highscore posting you should be able to see a button to post your current score to the highscores. Simple as that. If the score was high enough, it will be displayed in your highscore list for that game and possibly in the global highscore list as well.</p>
+
+							<p>The personal highscores for that game will be displayed right under the game window in the playgame page. To view global highscores and all your personal highscores, click <a href="{% url "highscores" %}"><b>HIGHSCORES</b></a> link in the left side bar. There global highscores are displayed for each game in the first tab and it has a search function to find spesific player's highscores (only the ones that made it to the global highscore list). Use the player's name for a keyword. In 'Your Highscores' tab you can see your personal highscores listed for each game you've purchased. The game won't show up in the list if it has no highscores recorded in the database though.</p>
+						</li>
+						<li><p class="faqheading">HOW DOES THE RATING SYSTEM WORK?</p>
+							<p>While playing a game you can give it 'thumbs up' if you liked the game or 'thumbs down' if you didn't like it by clicking one these two buttons displayed on that page. Keep in mind that you can only do this once. The game rating is displayed in several places on the website and games can be ordered by rating in <a href="{% url "browse" %}"><b>BROWSE GAMES</b></a>. Rating also affects which games are displayed on the site homepage under the heading 'FEATURED GAMES:'. As a customer you have the power to affect how other people see that spesific game so use it wisely.</p>
+						</li>
+                        <li><p class="faqheading">CAN I DOWNLOAD THE GAME I PURCHASED?</p>
+							<p>The service does not support downloading games as they are meant to be played in browser (JavaScript only works in browser anyway). Please, do not distribute the game source codes in order to support the developers</p>
+                        </li>
+                        <li>
+                            <p class="faqheading">WHAT ABOUT THE API?</p>
+                            <p>The api supports a couple of simple requests. To use the api, make a HTTP GET request to /api/ with at least the "type" parameter. Valid values are "games", "highscores", and "sales". Games and highscores are available to all users, to access sales provide your apikey and game id as  parameters named "apikey" and "id" respectively. The api responds with JSON data to valid requests.</p>
+                        </li>
+					</ul>
+				</div>
+			</div>
+			<div id="footer">
+				<div id="footer-text">
+					<p>Copyright © VidyaVortex. All rights reserved. Design by WSD-Group.</p>
+				</div>
+			</div>
+		</div>
+	 </div>
+  </body>
+</html>

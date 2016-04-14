@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>VidyaVortex - Dive into the World of Video Games</title>
+    
+    <meta name="description" content="Highscores page for VidyaVortex Web Service, Project WSD 2015">
+    <meta charset="utf-8" />
+
+    {% load staticfiles %}
+    <link rel="shortcut icon" type="image/png" href="{%  static "DataVortex/img/favicon.png" %}">
+    <script src="{% static "DataVortex/js/jquery-1.11.1.min.js" %}"></script> 
+    <script src="{% static "DataVortex/js/vidyavortex.js" %}"></script> 
+
+    <!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+	<!-- Optional theme 
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous"> -->
+
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+	
+	<link rel="stylesheet" href="{% static "DataVortex/css/main.css" %}" />
+
+	<script type="text/javascript">
+		$(document).ready(function() {
+			"use strict";
+			
+			/***************************************/
+			/************* FUNCTIONS ***************/
+			/***************************************/
+
+			function UpdateList(query) {
+				
+				var msg = {'messageType': 'GLOBAL_HIGHSCORE_LIST'};
+
+				jsonRequest(msg, 0, function(response) {
+					if (query) SearchList(response, query);
+					else PrintList(response);
+				});
+			}
+
+			function PrintList(list){
+
+				$("#highscorelist").html("");
+
+				{% if user.is_authenticated %}
+				$("#yourhighscorelist").html(""); 
+				{% endif %}
+
+				var globalscores = list.global.scores;
+				var globalplayers = list.global.players;
+				var globalgames = list.global.games;
+				var custom_class = "";
+
+				for (var i = 0; i < globalgames.length; i++) {
+					if(globalscores[i].length > 0) {
+		        		$("#highscorelist").append('\
+		      				<div id="highscore_row">\
+		      				<img id="thumbnail" src=' + globalgames[i][1] + ' alt="thumbnail"/>\
+		      				<span id="gamelist_text"> ' + globalgames[i][0] + '</span>\
+		      				</div>\
+		      				<div class="row" id="details">\
+		      				<div class="highscore_bar col-md-2 firstdetail">Rank</div>\
+		      				<div class="highscore_bar col-md-4">Player</div>\
+		      				<div class="highscore_bar col-md-4">Score</div>\
+		      				</div>\
+		      				<div class="global_highscore_list"></div>');
+
+		        		for (var j = 0; j < globalscores[i].length; j++){
+		        			if (j % 2 == 0) custom_class = "row_dark";
+		        			else custom_class = "row_light";
+		        			$(".global_highscore_list").eq(i).append('\
+		        				<div class="row" id="details">\
+			      				<div class="detail col-md-2 firstdetail '+ custom_class +'">'+ (j+1) +'.</div>\
+			      				<div class="detail col-md-4 '+ custom_class +'">'+ globalplayers[i][j] +'</div>\
+			      				<div class="detail col-md-4 '+ custom_class +'">'+ globalscores[i][j] +'</div>\
+			      				</div>'); 
+		        		}
+		        	}	
+			   	}
+			   	{% if user.is_authenticated %}
+
+				var userscores = list.user.scores;
+				var usergames = list.user.games;
+				var custom_class = "";
+				
+			   	for (var i = 0; i < usergames.length; i++) {
+			   		if(userscores[i].length > 0) {
+		        		$("#yourhighscorelist").append('\
+		      				<div id="highscore_row">\
+		      				<img id="thumbnail" src=' + usergames[i][1] + ' alt="thumbnail"/>\
+		      				<span id="gamelist_text"> ' + usergames[i][0] + '</span>\
+		      				</div>\
+		      				<div class="row" id="details">\
+		      				<div class="highscore_bar col-md-2 firstdetail">Rank</div>\
+		      				<div class="highscore_bar col-md-4">Score</div>\
+		      				</div>\
+		      				<div class="user_highscore_list"></div>');
+
+		        		for (var j = 0; j < userscores[i].length; j++){
+		        			if (j % 2 == 0) custom_class = "row_dark";
+		        			else custom_class = "row_light";
+		        			$(".user_highscore_list").eq(i).append('\
+		        				<div class="row" id="details">\
+			      				<div class="detail col-md-2 firstdetail '+ custom_class +'">'+ (j+1) +'.</div>\
+			      				<div class="detail col-md-4 '+ custom_class +'">'+ userscores[i][j] +'</div>\
+			      				</div>'); 
+		        		}
+		        	}
+		        	
+			   	}
+			   	{% endif %} 
+			}
+
+			function SearchList(response, query){
+
+				var test = query.toLowerCase();
+				var len = 0;
+
+				for (var i = 0; i < response.global.games.length; i++) {
+					
+					len = response.global.scores[i].length;
+					for (var j = 0; j < len; j++) {
+						
+						if(response.global.players[i][j].toLowerCase().indexOf(test) == -1){
+							
+							response.global.players[i].splice(j,1);
+							response.global.scores[i].splice(j,1);
+							j--;
+							len--;
+						}
+					}
+				}
+
+				PrintList(response);
+			}
+
+			/**********************************************/
+			/************* ON LOADUP ACTIONS **************/
+			/**********************************************/
+
+			UpdateList(null);
+
+
+			/*********************************************/
+			/************* EVENT LISTENERS ***************/
+			/*********************************************/
+
+			// update list with search match set and change tab to global highscores
+			$('#searchStart').click(function(){
+				var query = $('#searchQuery').val();
+				$('#first_tab').click();
+				UpdateList(query);
+			});
+
+			// display all highscores once user starts backspacing search query
+			$("#searchQuery").keyup(function() {
+				UpdateList(null);
+			}); 
+
+		});
+	</script>
+ 	</head>
+  	<body>	
+  		<div id="container">
+		  	<div id="header">
+				<div id="logo">
+					<a href="{% url "homepage" %}"><img src="{% static "DataVortex/img/logo.png" %}" alt="VidyaVortexLogo"/></a>
+				</div>
+				<div id="loginbar">
+					{% if not user.is_authenticated %}
+						<p><a href="{% url "login" %}">Login</a> <b>|</b> <a href="{% url "register" %}">Register</a></p>
+					{% else %}
+						<p><a href="{% url "logout" %}">Logout</a> <b>|</b> Welcome, {{ user.get_username }}!</p>
+					{% endif %}
+				</div>
+			</div>
+			<div id="content">
+				<div id="sidebar">
+					<ul>
+						<li><a href="{% url "homepage" %}">HOME</a></li>
+						{% if isDev %}
+						<li><a href="{% url "addgame" %}">ADD NEW GAME</a></li>
+						{% endif %}
+						<li><a href="{% url "browse" %}">BROWSE GAMES</a></li>
+						<li><a href="{% url "highscores" %}">HIGHSCORES</a></li>
+						<li><a href="{% url "faqpage" %}">FAQ</a></li>
+					</ul>
+				</div>
+				<div id="browse-box">
+					<nav class="navbar navbar-default">		
+						<ul class="nav nav-tabs">
+							<li class="active"><a data-toggle="tab" href="#global_highscores" id="first_tab">Global Highscores</a></li>
+							{% if user.is_authenticated %}
+						  	<li><a data-toggle="tab" href="#your_highscores" id="second_tab">Your Highscores</a></li>
+						  	{% endif %}
+						    <li class="col-sm-3 col-md-4 pull-right">
+					            <form class="navbar-form">
+					                <div class="input-group">
+					                    <input type="search" class="form-control" placeholder="Search Users" name="q" id="searchQuery">
+					                    <div class="input-group-btn"> 
+					                        <button class="btn btn-default" id="searchStart" type="button"><i class="glyphicon glyphicon-search"></i></button>
+					                    </div> 
+					                </div>
+					            </form>
+					        </li>
+						</ul>
+						<div class="tab-content">
+							<div id="global_highscores" class="tab-pane fade in active">
+								<div id="highscorelist"></div>
+							</div>
+							{% if user.is_authenticated %}
+							<div id="your_highscores" class="tab-pane fade">
+								<div id="yourhighscorelist"></div>
+							</div>
+							{% endif %}
+						</div>
+					</nav>
+				</div>
+			</div>
+			<div id="footer">
+				<div id="footer-text">
+					<p>Copyright © VidyaVortex. All rights reserved. Design by WSD-Group.</p>
+				</div>
+			</div>
+		</div>
+  	</body>
+</html>

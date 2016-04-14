@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>VidyaVortex - Dive into the World of Video Games</title>
+    
+    <meta name="description" content="Homepage for VidyaVortex Web Service, Project WSD 2015">
+    <meta charset="utf-8" />
+
+    {% load staticfiles %}
+    <link rel="shortcut icon" type="image/png" href="{%  static "DataVortex/img/favicon.png" %}">
+    <script src="{% static "DataVortex/js/jquery-1.11.1.min.js" %}"></script> 
+    <script src="{% static "DataVortex/js/vidyavortex.js" %}"></script> 
+
+    <!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+	<!-- Optional theme 
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous"> -->
+
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+	
+	<link rel="stylesheet" href="{% static "DataVortex/css/main.css" %}" />
+	<script type="text/javascript">
+		$(document).ready(function() {
+
+			var images = [];
+			var names = [];
+			var descriptions = [];
+			var x = 0;
+
+			msg = {'messageType': 'GLOBAL_GAME_LIST', 'ordering': 'RATING'};
+			jsonRequest(msg, 0, function(response) {
+				var len = 3;
+				if(response.length < 3) len = response.length;
+				for (var i=0; i < len; i++) {
+					//alert(JSON.stringify(response));
+					if (response[i].thumbnail !== undefined && response[i].thumbnail !== null){
+						images.push(response[i].thumbnail);
+						//alert(response[i].thumbnail);
+					}
+					if (response[i].name !== undefined && response[i].name !== null){
+						names.push("<b>" + ordinal(i+1) + " Rank: <i>" + response[i].name + "</i>,</b>");
+					}	
+					if (response[i].description !== undefined && response[i].description !== null){
+						descriptions.push(response[i].description);
+					}					
+				}
+				//alert(JSON.stringify(images));
+				//alert(JSON.stringify(descriptions));
+				if(images[0] !== undefined) $('#preview').attr('src', images[0]);
+				//$("game_title").html(names[1]);
+				//alert("{{ MEDIA_URL }}");
+				//alert(images[2]);
+				//document.getElementById("preview").src = "{{ MEDIA_URL }}" + images[0];
+				if(names.length > 0){
+					document.getElementById("game_title").innerHTML = names[0];
+					document.getElementById("description").innerHTML = descriptions[0];
+				}
+			});
+
+			function displayNextImage() {
+				if (names.length > 0) {
+	           
+		            if (x < images.length-1) {
+		            	x++;
+		            }
+		            else {
+		            	x = 0;
+		            }
+		               
+					$('#preview').attr('src', images[x]);
+		          
+		            document.getElementById("game_title").innerHTML = names[x];
+		            document.getElementById("description").innerHTML = descriptions[x];
+		        }
+	        }
+
+	        function displayPreviousImage() {
+	         
+	            if (x > 0) {
+	            	x--;
+	            }
+	            else {
+	            	x = images.length-1;
+	            }
+	            
+				$('#preview').attr('src', images[x]);
+	           
+	           	document.getElementById("game_title").innerHTML = names[x];
+	           	document.getElementById("description").innerHTML = descriptions[x];
+	        }
+
+	        setInterval(displayNextImage, 8000);
+
+	        $('#prev').click(displayPreviousImage);
+			$('#next').click(displayNextImage);
+
+		});
+	</script>
+  </head>
+  <body>	
+  	<div id="bg">
+  		<div id="container">
+		  	<div id="header">
+				<div id="logo">
+					<a href="{% url "homepage" %}"><img src="{% static "DataVortex/img/logo.png" %}" alt="VidyaVortexLogo"/></a>
+				</div>
+				<div id="loginbar">
+					{% if not user.is_authenticated %}
+						<p><a href="{% url "login" %}">Login</a> <b>|</b> <a href="{% url "register" %}">Register</a></p>
+					{% else %}
+						<p><a href="{% url "logout" %}">Logout</a> <b>|</b> Welcome, {{ user.get_username }}!</p>
+					{% endif %}
+				</div>
+			</div>
+			<div id="content">
+				<div id="sidebar">
+					<ul>
+						<li><a href="{% url "homepage" %}">HOME</a></li>
+						{% if isDev %}
+						<li><a href="{% url "addgame" %}">ADD NEW GAME</a></li>
+						{% endif %}
+						<li><a href="{% url "browse" %}">BROWSE GAMES</a></li>
+						<li><a href="{% url "highscores" %}">HIGHSCORES</a></li>
+						<li><a href="{% url "faqpage" %}">FAQ</a></li>
+					</ul>
+				</div>
+				<div id="content-box">
+					<h3>WHAT IS VIDYAVORTEX?</h3>
+						<p>VidyaVortex is an online game store for JavaScript games. The registered users can purchase and play games in our service, all conviniently happening in one's web browser. The user interface has been made so finding games and posting your highscores is fun and easy.</p>
+						<p>Of course, what is a game store without games? Our web service provides easy ways for game developers to host and sell their games. Read more <a href="{% url "faqpage" %}">here</a>.</p>
+					<h3>FEATURED GAMES:</h3>
+					<div id="preview-container">
+						<img id="preview" src="#" alt="">
+						<button type="button" id="prev">Previous</button>
+       					<button style="float: right" type="button" id="next">Next</button>
+       				</div>
+					<p style=clear:both><span id="game_title"></span> <span id="description"></span></p>
+				</div>
+			</div>
+			<div id="footer">
+				<div id="footer-text">
+					<p>Copyright © VidyaVortex. All rights reserved. Design by WSD-Group.</p>
+				</div>
+			</div>
+		</div>
+	 </div>
+  </body>
+</html>
